@@ -1,0 +1,136 @@
+API GATEWAYS
+-------------
+Authentication, authorization and security
+Rate Limits
+Fault Tolerant
+Service Aggregation
+
+All the calls will go through the api gateway instead of each microservices calling each other, it will do all the common features like the authorization
+
+Zuul Api GATEWAYS
+------------------
+
+Make the zuul api gateway
+What is should do when it intercepts the calls via different services
+All the calls should go through the zuul
+
+Dependency
+ZuulEureka Discovery Client
+Actuator
+Dev Tools
+
+Add it in the SpringBootApplication
+@EnableZuulProxy
+
+zuul server port 8765
+
+Enable Logging
+===============
+@Component
+public class ZuulLoggingFilter extends ZuulFilter {}
+
+URL to send the request via api gateway
+http://localhost:8765/currency-exchange-service/currency-exchange/from/USD/to/INR
+
+api gateway will log the request coming through it to the microservices 
+
+when the currency calculation service is calling the currency exchange service we want call to happen through the zuul api gateway 
+
+All the thing is already configured it is just connected to the currency exchange server
+@FeignClient(name="netflix-zuul-api-gateway-server")
+In get mapping just append the service name that is exposing it
+
+If we want to invoke the api gateway bfr the currency conversion service is called
+
+http://localhost:8765/currency-conversion-service/currency-converter-feign/from/USD/to/INR/quantity/50
+
+Distributed Tracing
+--------------------
+
+Single location where we can see the complete list of things that have happened to a request 
+
+Imp thing is to give the unique id to each request
+
+It is done by spring cloud sleuth (zipkins server)
+
+Spring Cloud Sleuth
+--------------------
+https://sivalabs.in/2018/03/microservices-part-6-distributed-tracing-with-spring-cloud-sleuth-and-zipkin/
+
+It adds unique id to a request
+In Zuul gateway server add depdendency
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-sleuth</artifactId>
+		</dependency>
+
+To take sample everytime include in SpringBootApplication
+	@Bean
+	public Sampler defaultSampler() {
+		return Sampler.ALWAYS_SAMPLE;
+	}
+
+In the console we can see the differernt logs with the id for a request but it is distributed over the differernt console
+Sleuth includes the pattern [appname,traceId,spanId,exportable] in logs from the MDC.
+
+We will configure the zipkins so that we can see the logs at a centralized place
+
+Zipkin Distributed Tracing Server
+----------------------------------
+ELK -- Elastic Search Log Stash and Kibana
+RabbitMQ - Log msg from all the services to the Zipkin Distributing Tracing Server is done by rabbitmq so that we can track them in zipkin distributed tracing server
+
+RabbitMQ
+---------
+To run rabbitmq you need earlang
+rabbitMQ is the startup service
+
+Zipkin
+
+From the finchley M3 releaase of Spring Cloud the zipkin server is removed we need to download from google
+
+https://zipkin.io/pages/quickstart
+download the zipkin exe jar and run it
+java -jar **.jar
+
+//Zipkin console
+http://localhost:9411/zipkin/
+
+To connect rabbit mq server to the zipkin
+Set RABBIT_URI=amqp://localhost
+java -jar zipkin-server-2.11.8-exec.jar
+
+Dependency in zuul server
+
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-sleuth-zipkin</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-bus-amqp</artifactId>
+		</dependency>
+		
+New Dependency
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-zipkin</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.amqp</groupId>
+			<artifactId>spring-rabbit</artifactId>
+		</dependency>
+
+Startup Seq
+Naming server
+Currency Conversion Service
+Currency Exchange Service
+
+2018-03-20 11:41:02.241  INFO [catalog-service,7d0d44fe314d7758,7d0d44fe314d7758,true] 53617 --- [nio-8181-exec-5] c.s.c.services.ProductService
+
+Add below lines in the application .properties of all service
+spring.zipkin.base-url=http://localhost:9411/
+
+Spring Cloud Bus
+=================
+

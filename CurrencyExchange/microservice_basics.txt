@@ -1,0 +1,359 @@
+Microservice
+--------------
+
+Dependency
+Web
+Rest repositories to expose Spring Data repositories over REST
+JPA
+H2 in memory
+
+https://github.com/in28minutes/spring-microservices/tree/master/03.microservices
+
+Microservices with Spring Cloud
+
+REST
+Smalll deployable unit
+Cloud enabled
+
+
+Challenges
+-----------
+
+Bounded Context
+
+Configuration Management - If 10 microservice with 5 env n 50 instances
+
+Dynamic Scale up and Scale Down - loads on the different microservice will be differernt , how to add new microservice with dynamic load balancing
+
+Visibility - Identify where the bug is and in which microservices is down and monitoring on them
+
+Pack of cards - If not well designed, as one microservice is dependent on another so we shld have the fault tolerance
+
+Spring Cloud
+-------------
+
+It provide tools to solve the problem 
+
+Configuration Management - Spring Cloud Config Server where all th configuration is stored in the git repository,
+* Spring cloud config server helps us to reveal the config to all the microservice
+
+Dynamic Scale Up and Scale Down 
+
+* Naming Server(Eureka) - All the instances of the microservice will be registered with the naming server
+
+Imp feature
+Service registration
+Service discovery
+
+* Ribbon Load Balancing -  For Client side load balancing 
+
+* Feign - To write simple REST full web service
+
+Visilibity and Monitoring
+
+Zipkin Distributed Tracing - To trace a request across multiple component
+Netflix API Gateway 
+
+Fault Tolerance - hysterix, if the service is down then to provide the default view
+
+Advantages
+-----------
+New technology and process can be adapted easily
+Dynamic Scaling
+Faster Release Cycles
+ 
+Ports
+
+Limits Service						8080, 8081,
+Spring Cloud Config Server			8888
+Currency Exchange Service			8000, 8001, 8002, 
+Currency Conversion Service			8100, 8101, 8102, 
+Netflix Eureka Naming Server		8761
+Netflix Zuul API Gateway Server		8765
+Zipkin Distributed Tracing Server	9411
+
+
+Centralized Microservice Configuration
+---------------------------------------
+
+Spring Cloud Config Server
+---------------------------
+
+It keeps everything in git n then the server manages the configurations for all the services for different enveoronment also
+
+Dependency
+Acuator- It gives the monitoring services
+Config Client - To connect to the spring cloud config server
+Web
+Dev Tools
+
+
+Limit Services
+
+We need to get the configuration from the Spring Cloud Config Server
+
+In application.properties
+// To give name to our application
+spring.application.name=limits-service
+
+
+To read value from the configuration
+
+@Component
+@ConfigurationProperties("limits-service") - this will read the configuration starting from limits-service that is our service 
+public class Configuration
+
+We created the Configuration class and defined our configuration in the application.properties and used that in our class
+limits-service.minimum=99
+limits-service.maximum=999
+
+* Now we will have to connect our limit service to the spring cloud config server
+
+Spring Cloud Config Server
+
+Dependency
+Config Server
+Dev Tools - Just picks up the changes when we save it we dont have to restart the project
+
+Create a git repository 
+Create a folder 
+From terminal go to that folder 
+Run git init // To initialize the git repository
+
+Add the link to that folder in your eclipse 
+Build path -> Link Source
+
+Add the limits-service.properties file created in the git repository
+
+Run git add -A 
+git commit -m "first commit"
+git status //It tells us the new files that are present that we need to commit 
+
+After that connect the spring cloud server to the local git Repository
+
+In the application.properties of config-server add
+spring.cloud.config.server.git.uri=file://C://Shubham//Personal//Java//git-local-config-repo
+
+For the Config Server we need to add 
+@EnableConfigServer for the Application class else it will not run
+
+launch the server and see the below link to confirm the working
+http://localhost:8888/limits-service/default
+
+So what we have done is establish the relationship between the spring cloud config server and the git repository 
+Spring cloud config server stores configuration for multilple service
+It can also stores services of all the services for different environment like dev, qa, prod
+
+ new file:   limits-service-dev.properties
+ new file:   limits-service-qa.properties
+ 
+// This will show the properties based on the priority that is qa first then deafult values 
+http://localhost:8888/limits-service/qa 
+
+We want limits-service to connect to the spring cloud config server and take in values from there for limit-service 
+We cannot use name application.properties as we want to pick values from spring-cloud-config-server that also has application.properties
+
+//This will point to the config-server
+spring.cloud.config.uri=http://localhost:8888
+
+http://localhost:8080/limits/
+
+Add below line in bootstrap.properties to fetch configs of different environments from the git  
+spring.profiles.active=dev
+
+At the application startup the limit service pinks up the value from the spring cloud config server so we need to restart the limit service
+
+We need to restart the limit service to pickuo the changes from the git repository 
+this can be resolved easily 
+
+
+Example service
+CurrencyExchangeService - JPA to talk to database and return the value of conversion multiple
+CurrencyCalculationService - This will use CurrencyExchangeService to get the value from EUR to INR then it uses logic to convert the whole value
+
+currency-exchange-service
+dependency
+web
+dev tools
+actuator
+config client
+
+Right now for currency-exchange-service we have specified the port 8000 later on it inc on as 8001,8002,...
+And we want our currency-calculation-service to talk to all of these ports
+
+So for that add a port not in constructor but to the getter n setters 
+
+//Environment is the interface in the spring framwork which has all the details realted to the environment 
+@Autowired
+private Environment environment;
+
+@GetMapping("/currency-exchange/from/{from}/to/{to}")
+	public ExchangeValue retrieveExchangeValue(@PathVariable String from, @PathVariable String to) {
+		ExchangeValue exchangeValue = new ExchangeValue(1000L, from, to, BigDecimal.valueOf(65));
+		
+	// This one fetches the port from the application.properties that we have written over there	exchangeValue.setPort(Integer.parseInt(environment.getProperty("local.server.port")));
+		return exchangeValue;
+
+But if we have two instances of currency-exchange-service we cannot depend upon the port on the application.properties so we have to set the port externally
+
+
+In the run configuration create duplicate service n in vm arguments give 
+// This basically overwrites the application.properties 
+-Dserver.port=8001
+Start both the instance of the srevice with diff port  
+
+http://localhost:8000/currency-exchange/from/USD/to/INR
+http://localhost:8001/currency-exchange/from/USD/to/INR
+
+We have to search on the basis of from and the to.
+To do that we have to search query method by adding findByTwoColumn in JpaRepository
+ExchangeValue findByFromAndTo(String from1, String to1);
+// Spring data jpa will automatically provide the implementation for the search based on the two parmater passed we dont have to write the code for search 
+//From and To are the name of the two columns we have to keep the name of the columns
+findByFromAndTo
+
+Error: Invalid derived query! No property from found for type ExchangeValue! Did you mean 'from1'?
+
+Ans : Close the validation. It's an IDE error explained in the following post:
+
+http://forum.springsource.org/showthread.php?138585-Invalid-derived-query!-No-property-delete-found-for-type-java-lang-Object
+
+In the meantime, you can turn off the validation in preferences/spring/project validators/Data validator uncheck invalid derived query and STS wont throw the marker anymore.
+
+http://localhost:8001/currency-exchange/from/USD/to/INR
+
+
+currency-conversion-service/currency-converter will call, when we call the USD to INR currency-exchange-service that will return the conversion multiple that will multiple with the quantity and return back the complete value converted
+
+We need to call/invoke currency-exchange-service from currency-calculation-service we need the Rest Template we will pass in the values to the currencyexchang service and get the data from there for conversion multiple
+
+From entity we will get the body of the response
+CurrencyConversionBean response = responseEntity.getBody();
+
+//This will fetch value from the currency conversion
+http://localhost:8100/currency-converter/from/USD/to/INR/quantity/50
+
+
+We recommend using Finchley.M8 for now
+Add that in properties below parent
+<spring-cloud.version>Finchley.M8</spring-cloud.version>
+
+Feign
+------
+To call rest service inside the class we have to do lot of work and call RestTemplate
+and write the piece of code
+To remove that we will be using the feign
+It provide the integration with ribbon that is cleint side load balancer
+
+Add beloe dependency in the pom
+<dependency>
+	<groupId>org.springframework.cloud</groupId>
+	<artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+
+
+mvn clean install -U
+Enable Feign cleints on the spring boot start application
+@EnableFeignClients("com.shubham.microservices.currencyconversionservice")
+
+
+Create an interface
+FeignClient is the client and we mention the name of the service the we want to consume and the url that is the port of the service is currently running
+@FeignClient(name="currency-exchange-service",url="localhost:8000")
+public interface CurrencyExchangeProxy {
+
+@GetMapping("/currency-exchange/from/{from}/to/{to}")
+// in feign we shld always use specify the exact variable name in the path variable
+	public CurrencyConversionBean retrieveExchangeValue(@PathVariable("from") String from, @PathVariable("to") String to);
+
+
+}
+
+Open the currency exchange service and take the mapping from there what we want to call
+And change the bean 
+
+
+http://localhost:8100/currency-converter/from/USD/to/INR/quantity/50
+
+//Feign is working fine also
+http://localhost:8100/currency-converter-feign/from/USD/to/INR/quantity/50
+
+
+Ribbon
+-------
+It act as a load balancer for prod server so tht many servers can be connected
+
+Ribbon make use of the feign client and help us in distributing the calls to the different srevice as a load balancer
+
+Enable ribbon in currency exchange service once it is done we will make use of multiple instances of that 
+
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+		</dependency>
+
+@RibbonClient(name="currency-exchange-service") // in the proxy interface
+Add the line in application.properties
+currency-exchange-service.ribbon.listOfServers=http://localhost:8000,http://localhost:8001
+
+ribbon is distributing the load between two services
+
+Dynamically increase or decrease the service based on the load on the server so we require the Eureka Naming Server
+
+Whenever the new service comes up it registers itself with the eureka naming server
+
+Currency calculation service will ask the eureka what all the service is running at the runtime so that they can start it based on the load
+
+
+Eureka Naming Server
+---------------------
+
+Add the Currency Exchange Service with the naming server first
+netflix-eureka-naming-server
+
+depedndency
+Eureka Server
+Config Client  // To save the details of the servers
+actuator
+dev tools
+
+In springbootapplication add
+
+@EnableEurekaServer
+// it is the default port
+server.port=8761 
+
+http://localhost:8761/
+
+To add client to the eureka server add below depedndency on the client services like currency exchange service
+	<dependency>
+	<groupId>org.springframework.cloud</groupId>
+	<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+	</dependency>
+
+Also add below annotation in CurrencyConversionApplication i.e. starting point
+@EnableDiscoveryClient 
+
+In application.properties configure the eureka client url in the client service
+eureka.client.service-url.default-zone=http://localhost:8761/eureka
+
+So when we do the launch the currency conversion service it will register itself with the eureka naming server
+
+Do the same for currency exchange service and limit service
+
+We want ribbon to check with the naming server to fetch the service detail that all are there then at the runtime it will make use of that service we dont want to hard code values for ribbon
+
+We need to enable ribbon to talk to eureka disable the listof server for the ribbon in the application.properties and it start talking on its own
+
+Always start Eureka naming server first then the rest of the client that are configured
+
+Summary
+
+We created the service with the direct url connection with currency calulation service to the currency exchange service 
+We added feign to call to write the client side of the rest service much easier 
+To introduce load balancing we use ribbon by hard coding the url of the curency exchange service
+Then we use the eureka naming server to call the service dynamically for the currency calculation service 
+
+
+
+
