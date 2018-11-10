@@ -1,0 +1,5 @@
+com\shubham\microservices\limitsservice\bean\LimitConfiguration.class
+com\shubham\microservices\limitsservice\LimitConfigurationController.class
+com\shubham\microservices\limitsservice\LimitsServiceApplication.class
+META-INF\spring-configuration-metadata.json
+com\shubham\microservices\limitsservice\Configuration.class

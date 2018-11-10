@@ -1,0 +1,24 @@
+{
+  "hints": [],
+  "groups": [
+    {
+      "sourceType": "com.shubham.microservices.limitsservice.Configuration",
+      "name": "limits-service",
+      "type": "com.shubham.microservices.limitsservice.Configuration"
+    }
+  ],
+  "properties": [
+    {
+      "sourceType": "com.shubham.microservices.limitsservice.Configuration",
+      "defaultValue": 0,
+      "name": "limits-service.maximum",
+      "type": "java.lang.Integer"
+    },
+    {
+      "sourceType": "com.shubham.microservices.limitsservice.Configuration",
+      "defaultValue": 0,
+      "name": "limits-service.minimun",
+      "type": "java.lang.Integer"
+    }
+  ]
+}
