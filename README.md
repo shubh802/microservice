@@ -15,25 +15,32 @@ Technology updates/rewrites become simpler.
 
 Following are just a few Spring Cloud modules that can be used to address distributed application concerns:
 
-Spring Cloud Config Server: 
+Spring Cloud Config Server
+
 Used to externalize the configuration of applications in a central config server with the ability to update the configuration values without requiring to restart the applications. We can use Spring Cloud Config Server with git, Consul, or ZooKeeper as a config repository.
 
-Service Registry and Discovery: 
+Service Registry and Discovery
+
 As there could be many services and we need the ability to scale up or down dynamically, we need a Service Registry and Discovery mechanism so that service-to-service communication does not depend on hard-coded hostnames and port numbers. Spring Cloud provides Netflix Eureka-based Service Registry and Discovery support with just minimal configuration. We can also use Consul or ZooKeeper for Service Registry and Discovery.
 
-Circuit Breaker: 
+Circuit Breaker
+
 In microservices-based architecture, one service might depend on another service, and if one service goes down, then failures may cascade to other services as well. Spring Cloud provides a Netflix Hystrix-based Circuit Breaker to handle these kinds of issues.
 
-Spring Cloud Data Streams: 
+Spring Cloud Data Streams
+
 We may need to work with huge volumes of data streams using Kafka or Spark. Spring Cloud Data Streams provides higher-level abstractions to use those frameworks more easily.
 
-Spring Cloud Security: 
+Spring Cloud Security
+
 Some microservices need to be accessible to authenticated users only, and most likely, we'll want a Single Sign-On feature to propagate the authentication context across services. Spring Cloud Security provides authentication services using OAuth2.
 
-Distributed Tracing: 
+Distributed Tracing
+
 One of the pain points with microservices is the ability to debug issues. One simple end-user action might trigger a chain of microservice calls; there should be a mechanism to trace the related call chains. We can use Spring Cloud Sleuth with Zipkin to trace cross-service invocations.
 
-Spring Cloud Contract: 
+Spring Cloud Contract
+
 There is a high chance that separate teams will work on different microservices. There should be a mechanism for teams to agree upon API endpoint contracts so that each team can develop their APIs independently. Spring Cloud Contract helps to create such contracts and validate them by both the service provider and consumer.
 
 * By deafult the SpringBootApplication contains the configuration annotation which allows us to register the beans within this class
